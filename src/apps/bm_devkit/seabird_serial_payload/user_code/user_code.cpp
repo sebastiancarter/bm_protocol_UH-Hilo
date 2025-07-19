@@ -1,18 +1,21 @@
 #include "user_code.h"
-#include "bm_network.h"
-#include "bm_printf.h"
-#include "bm_pubsub.h"
+#include "LineParser.h"
+#include "OrderedSeparatorLineParser.h"
+#include "app_util.h"
+#include "array_utils.h"
+#include "avgSampler.h"
 #include "bristlefin.h"
 #include "bsp.h"
 #include "debug.h"
 #include "lwip/inet.h"
 #include "payload_uart.h"
+#include "pubsub.h"
 #include "sensors.h"
+#include "spotter.h"
 #include "stm32_rtc.h"
 #include "task_priorities.h"
 #include "uptime.h"
 #include "usart.h"
-#include "util.h"
 
 #define LED_ON_TIME_MS 20
 #define LED_PERIOD_MS 1000
@@ -21,8 +24,6 @@
 #define BYTES_CLUSTER_MS 50 // used for console printing convenience
 #define DEFAULT_UART_MODE MODE_RS232
 
-// app_main passes a handle to the user config partition in NVM.
-extern cfg::Configuration *userConfigurationPartition;
 
 // A timer variable we can set to trigger a pulse on LED2 when we get payload serial data
 static int32_t ledLinePulse = -1;
@@ -36,12 +37,6 @@ char payload_buffer[311]; // This might be bad practice but it seems like this
 void setup(void) {
   /* USER ONE-TIME SETUP CODE GOES HERE */
   // Retrieve user-set config values out of NVM.
-  userConfigurationPartition->getConfig("plUartBaudRate", strlen("plUartBaudRate"),
-                                        baud_rate_config);
-  userConfigurationPartition->getConfig("plUartLineTerm", strlen("plUartLineTerm"),
-                                        line_term_config);
-  userConfigurationPartition->getConfig("plUartMode", strlen("plUartMode"),
-                                        uart_mode_config);
   if (uart_mode_config >= MODE_MAX) {
     printf("ERROR - PLUART UART MODE %lu is not supported. Reverting to MODE_RS232\n", uart_mode_config);
     uart_mode_config = MODE_RS232;
@@ -160,9 +155,9 @@ void loop(void) {
     rtcPrint(rtcTimeBuffer, &time_and_date);
 
     // Print the payload data to a file, to the bm_printf console, and to the printf console.
-    bm_fprintf(0, "payload_data.log", USE_TIMESTAMP, "tick: %llu, rtc: %s, line: %.*s\n",
+    spotter_log(0, "payload_data.log", USE_TIMESTAMP, "tick: %llu, rtc: %s, line: %.*s\n",
                uptimeGetMs(), rtcTimeBuffer, read_len, payload_buffer);
-    bm_printf(0, "[payload] | tick: %llu, rtc: %s, line: %.*s", uptimeGetMs(),
+    spotter_log_console(0, "[payload] | tick: %llu, rtc: %s, line: %.*s", uptimeGetMs(),
               rtcTimeBuffer, read_len, payload_buffer);
     printf("[payload-line] | tick: %llu, rtc: %s, line: %.*s\n", uptimeGetMs(),
            rtcTimeBuffer, read_len, payload_buffer);
