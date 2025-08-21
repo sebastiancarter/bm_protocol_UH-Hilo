@@ -80,7 +80,7 @@ void setup(void) {
   bristlefin.enableVout();
   // enable 5V out.
   // bristlefin.enable5V();
-  // sendSensorCommand("StartNow");
+  sendSensorCommand("StartNow");
   // sendSensorCommand("Stop");
 }
 
