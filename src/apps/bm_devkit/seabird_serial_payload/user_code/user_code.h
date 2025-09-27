@@ -6,7 +6,7 @@
 
 void setup(void);
 void loop(void);
-
+void sendSensorCommand(const char *command_payload);
 typedef enum
 {
   MODE_RS232 = 0,  // Default mode

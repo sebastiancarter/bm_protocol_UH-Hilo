@@ -36,7 +36,7 @@ static u_int32_t uart_mode_config = DEFAULT_UART_MODE;
 // A buffer for our data from the payload uart
 char payload_buffer[311]; // TODO: might need to change this, but feels like it was set to 311 for a good reason
 
-static void sendSensorCommand(const char *command_payload) {
+void sendSensorCommand(const char *command_payload) {
   char full_command[128];
   snprintf(full_command, sizeof(full_command), "%s\r\n", command_payload);
   PLUART::write((uint8_t *)full_command, strlen(full_command));
@@ -81,7 +81,7 @@ void setup(void) {
   // enable 5V out.
   // bristlefin.enable5V();
   // sendSensorCommand("StartNow");
-  // sendSensorCommand("Stop");
+  sendSensorCommand("Stop");
 }
 
 void loop(void) {
